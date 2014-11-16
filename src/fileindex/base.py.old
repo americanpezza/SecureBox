@@ -1,0 +1,208 @@
+import os, time 
+from datetime import datetime
+from crypto.file import FileMeta, getLocalFileMod
+
+__author__ = 'pezza'
+
+
+SEPARATOR = "$$$"
+
+
+
+
+def totimestamp(dt, epoch=datetime(1970,1,1)):
+    td = dt - epoch
+    # return td.total_seconds()
+    return (td.microseconds + (td.seconds + td.days * 24 * 3600) * 10**6) / 1e6
+
+def getTimestamp():
+    return totimestamp(datetime.utcnow()) 
+
+class KeyValuesStore:
+    def __init__(self, index_path, index_file):
+        self.indexDataFile = os.path.join(index_path, index_file)
+        self.index_file = index_file
+        self.index_path = index_path
+        self.cursor = 0
+        self.dirty = False
+        self.records = {}
+
+        # Load index if possible
+        if os.path.exists(self.indexDataFile):
+            self.load(True)
+
+    def load(self, force=False):
+        with open(self.indexDataFile, 'r') as f:
+            newCursor = f.readline().strip()
+            if newCursor is not None and newCursor != '':
+               if float(newCursor) < float(self.cursor) and not force:
+                   print "WARNING: index is up to date, not loading"
+               else:
+                   # Reset cursor
+                   self.clear() 
+                   self.cursor = float(newCursor)
+
+                   for line in f:
+                       parts = line.strip().split(SEPARATOR)
+                       self.loadRecord(parts)
+                        
+    def loadRecord(self, parts):
+        key = parts.pop(0)
+        self.records[key] = parts
+
+    def clear(self):
+        self.records = {}
+        self.cursor = 0.0
+
+    def isDirty(self):
+        return self.dirty
+
+    def makeDirty(self):
+        self.dirty = True
+        self.cursor = getTimestamp()
+
+    def getCursor(self):
+        return self.cursor
+
+    def save(self):
+        with open(self.indexDataFile, 'w') as f:
+            f.write(str(self.cursor) + "\n")
+            for path, data in self.records.items():
+                f.write(self.getSaveRecord(path, data))
+
+        self.dirty = False
+
+    def getSaveRecord(self, path, data):
+        return (path + SEPARATOR + SEPARATOR.join(data) + "\n")
+
+    def isIndex(self, path):
+        return path == self.index_file
+    
+    def addRecord(self, path, *args):
+        self.records[path] = args
+        self.makeDirty()
+
+    def removeRecord(self, path):
+        if self.records.has_key(path):
+            del self.records[path]
+            self.makeDirty()
+        
+    def getRecord(self, path):
+        result = None
+        if self.records.has_key(path):
+            result = self.records[path]
+
+        return result
+        
+    def getKeys(self):
+        return self.records.keys()
+                     
+    def getIndexPath(self):
+        return self.index_path
+
+    def getIndexFilePath(self):
+        return self.indexDataFile
+
+class FileIndex(KeyValuesStore):
+    def __init__(self, path, index):
+        self.transactions = {}
+        KeyValuesStore.__init__(self, path, index)
+
+    def addRecord(self, path, *args):
+        KeyValuesStore.addRecord(self, path, *args)
+        self.transactions[path] = ['add', getTimestamp()]
+
+    def removeRecord(self, path):
+        KeyValuesStore.removeRecord(self, path)
+        self.transactions[path] = ['del', getTimestamp()]
+
+
+    def getTransaction(self, path):
+        result = None
+        if self.transactions.has_key(path):
+            result = self.transactions[path]
+
+        return result
+
+    def clear(self):
+        KeyValuesStore.clear(self)
+        self.transactions = {}
+
+    def removeTransaction(self, path):
+        if self.transactions.has_key(path):
+            del self.transactions[path]
+            self.makeDirty()
+
+    def getTransactions(self):
+        return self.transactions
+
+    def loadRecord(self, parts):
+        if not self.loadFlag:
+            if len(parts) == 2 and parts[0] == '' and parts[1] == '':
+                self.loadFlag = True
+            else:
+                KeyValuesStore.loadRecord(self, parts)
+        else:
+            self.transactions[parts[0]] = [parts[1], float(parts[2])]
+
+    def load(self, force=False):
+        self.loadFlag = False
+        KeyValuesStore.load(self, force)
+
+    def save(self):
+        KeyValuesStore.save(self)
+        with open(self.indexDataFile, 'a') as f:
+            f.write(SEPARATOR + "\n")
+            for path, data in self.transactions.items():
+                f.write(path + SEPARATOR + SEPARATOR.join([str(x) for x in self.transactions[path]]) + "\n")
+
+
+
+
+
+def test():
+    from subprocess import call
+
+    indexFile = "keyValuesStore.local"
+    indexPath = "/tmp/"
+
+    test1 = "/lissippetto.local"
+    test2 = "/lisippettone.local"
+    test3 = "/lisippettuzzo.local"
+    
+    index = FileIndex(indexPath, indexFile)
+
+    index.addRecord(test1, "data1", "data2")
+    index.addRecord(test2, "data123", "data12345", "data1234567")
+    index.addRecord(test3, "data")
+
+    assert index.isDirty() == True
+    assert len(index.getTransactions()) != 0
+
+    print "Index path is %s" % index.getIndexPath()
+    print "Full index file path is %s" % index.getIndexFilePath()
+
+    assert index.isIndex(indexFile)
+
+    index.save()
+
+    index.clear()
+    assert len(index.getTransactions()) == 0
+    assert len(index.getKeys()) == 0
+
+    index.load()
+
+    assert len(index.getKeys()) != 0
+
+    print "Keys: %s" % str(index.getKeys())
+
+    assert index.getRecord(test2) is not None
+    index.removeRecord("/lisippettone.local")
+    assert index.getRecord(test2) is None
+
+    assert index.getRecord(test3) is not None
+
+
+    call(["rm", os.path.join(indexPath, indexFile)])
+
+
