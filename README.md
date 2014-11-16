@@ -49,8 +49,8 @@ The app has been developed and tested under Mac OSX 10.9 and Linux (Ubuntu 14.04
 The help option is pretty self explanatory.
 
 ```
-$ securebox -h
-usage: securebox [-h]
+$ python securebox.py -h
+usage: python securebox.py [-h]
                      (--start | --stop | --restart | --list | --check | --rebuild | --export EXPORT | --import IMP | --configure)
 
 optional arguments:
