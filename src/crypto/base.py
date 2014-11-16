@@ -1,6 +1,5 @@
 import os,  aes
 from getpass import getpass
-#from settings import APP_PATH, CONFIG_PATH, CONFIG_DB, config
 from pbkdf2 import PBKDF2
 
 
@@ -69,6 +68,4 @@ def loadConfiguration(input_path,  pwd = None):
     crypt = getCrypticle(password,  salt)
     config = crypt.loads(encrypted_text)
 
-    #crypt = getCrypticle(password, config['appSecret'])
-    
     return config, crypt

@@ -406,21 +406,21 @@ def test():
     crypt = getCrypticle(password, salt)
 
     
-   # testFileSize = (16 * 1024 * 1024)
-   # testFileContent = "Sopra la campa la capra crepa, Sotto la Panca la capra campa"
-   # testFileLines = testFileSize / (len(testFileContent) + 1)
+   testFileSize = (16 * 1024 * 1024)
+   testFileContent = "Sopra la campa la capra crepa, Sotto la Panca la capra campa"
+   testFileLines = testFileSize / (len(testFileContent) + 1)
 
 
-   # print "Generating a %s byte-byte long test file..." % testFileSize
-   # with open(os.path.join(root_path, path_plain), "w") as f:
-   #     for i in range(0,testFileLines):
-   #         f.write(testFileContent + "\n")
+   print "Generating a %s byte-byte long test file..." % testFileSize
+   with open(os.path.join(root_path, path_plain), "w") as f:
+       for i in range(0,testFileLines):
+           f.write(testFileContent + "\n")
 
-    call(["cp",os.path.join(root_path, path_plain), os.path.join(root_path, path_plain_check)])
+   call(["cp",os.path.join(root_path, path_plain), os.path.join(root_path, path_plain_check)])
 
-    filesize = os.path.getsize( os.path.join(root_path, path_plain_check))
+   filesize = os.path.getsize( os.path.join(root_path, path_plain_check))
 
-    start = time.time()
+   start = time.time()
 
     
     
@@ -607,25 +607,3 @@ def test():
     print "\nDone.\n\n"
     
 
-        
-# Original algorithm taken from http://security.stackexchange.com/questions/57498/asymmetric-data-storage-no-hash-password-storage
-#
-# What you probably want to do is use a Key Wrap algorithm, but it's not absolutely necessary.
-# It seems reasonable to me that you could do the following for encryption:
-#
-# - Compute a user key from the user's password, using something strong like PBKDF2.
-# - Generate a random data key.
-# - Encrypt the data key with the user key, this will be stored as the wrapped key.
-# - Generate an HMAC across the wrapped key keyed by the user key. This will be stored for authentication. (You still need to select the row by another mechanism.)
-# - Encrypt the data using the data key.
-# - Store the PBKDF2 salt, wrapped key, hmac, IV, and encrypted data.
-#
-# Decryption:
-# - Select the relevant row from the DB.
-# - Using the salt, recalculate the user key from the password.
-# - Verify the HMAC on the wrapped key using the user key. This is the authentication step.
-# - Use the user key to decrypt the wrapped key, revealing the data key.
-# - Decrypt the data using the IV and the data key.
-
-
-        

@@ -79,5 +79,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ### Credits
 
-http://code.activestate.com/recipes/576980-authenticated-encryption-with-pycrypto/ - My encryption code is based on this
-very handy little snippet. I modified it to use a 128 bit key instead of 192 bit key.
+* https://cryptography.io : a python encryption library with a modern approach to encryption. Even if it's not used in the app, some ideas are taken from here
+* https://github.com/americanpezza/pyDropSecure : a basic ecnryption/decryption script supporting storage on DropBox
+* http://security.stackexchange.com/questions/57498/asymmetric-data-storage-no-hash-password-storage : A discussion on how to store data in a database with symmetric encryption and salting
+* http://code.activestate.com/recipes/576980-authenticated-encryption-with-pycrypto/ : most of the encryption code is based on this very handy little snippet, modified to use a 256 bit key instead of 192 bit key
