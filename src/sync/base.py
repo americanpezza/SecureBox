@@ -81,7 +81,8 @@ class Synchronizer:
     def removePaths(self, paths, index, crypt):
         actions = []
         for remote_path, meta in paths.items():
-            remotekey, remotesalt, path, remotemod = meta.decryptMeta(crypt.keys[0])
+            #remotekey, remotesalt, path, remotemod = meta.decryptMeta(crypt.keys[0])
+            remotekey, remotesalt, path, remotemod = crypt.decryptMeta(meta)
             indexMeta = index.getFileMeta(path)
 
             if indexMeta is not None:
@@ -94,7 +95,8 @@ class Synchronizer:
         return actions
 
     def removeByMeta(self, local_meta, remote_meta, crypt):
-        localkey, localsalt, path, localmod = local_meta.decryptMeta(crypt.keys[0])
+        #localkey, localsalt, path, localmod = local_meta.decryptMeta(crypt.keys[0])
+        localkey, localsalt, path, localmod = crypt.decryptMeta(local_meta)
         action = None
 
         if local_meta.getMeta() == remote_meta.getMeta():
@@ -104,8 +106,10 @@ class Synchronizer:
         else:
             # the file has been deleted remotely, but our copy has a different meta
             # let's check them
-            localkey, localsalt, localpath, localmod = local_meta.decryptMeta(crypt.keys[0])
-            remotekey, remotesalt, remotepath, remotemod = remote_meta.decryptMeta(crypt.keys[0])
+            #localkey, localsalt, localpath, localmod = local_meta.decryptMeta(crypt.keys[0])
+            localkey, localsalt, localpath, localmod = crypt.decryptMeta(local_meta)
+            #remotekey, remotesalt, remotepath, remotemod = remote_meta.decryptMeta(crypt.keys[0])
+            remotekey, remotesalt, remotepath, remotemod = crypt.decryptMeta(remote_meta)
 
             if localmod > remotemod:
                 # Our local copy is better than the remote copy
@@ -122,7 +126,8 @@ class Synchronizer:
         for remote_path, meta in modified.items():
             path = meta.getFilePath()
             indexMeta = index.getFileMeta(remote_path)
-            remotekey, remotesalt, remotepath, remotemod = meta.decryptMeta(crypt.keys[0])
+            #remotekey, remotesalt, remotepath, remotemod = meta.decryptMeta(crypt.keys[0])
+            remotekey, remotesalt, remotepath, remotemod = crypt.decryptMeta(meta)
 
             if indexMeta is None:
                 # file has been added remotely, and it's not in our index.
@@ -141,7 +146,8 @@ class Synchronizer:
                 print "File %s has been created remotely --> download" % remotepath
             else:
                 print "Decrypting %s" % remote_path
-                localkey, localsalt, localpath, localmod = indexMeta.decryptMeta(crypt.keys[0])
+                #localkey, localsalt, localpath, localmod = indexMeta.decryptMeta(crypt.keys[0])
+                localkey, localsalt, localpath, localmod = crypt.decryptMeta(indexMeta)
  
                 if remotemod > localmod:
                     # file has been updated remotely, download it and replace in our index

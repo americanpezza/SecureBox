@@ -103,7 +103,7 @@ class FileMeta:
         self.path = base64.b32decode(path.upper())
         self.fileMod = base64.b32decode(mod.upper())
 
-    def encryptMeta(self, userKey, path, mod):
+    def encrypt(self, userKey, path, mod):
         # salt to be used for both data key encryption and file contents encryption        
         salt = os.urandom(16)
 
@@ -126,7 +126,7 @@ class FileMeta:
 
         return data_key, salt, keysig
 
-    def decryptMeta(self, userKey):
+    def decrypt(self, userKey):
         wrapped_key, salt, keysig, path, fileMod = self.getElems()
 
         # Create a cripticle for file metadata decoding
@@ -162,7 +162,8 @@ class PlainFile:
         self.handle = None
 
         self.fileMeta = FileMeta()
-        data_key, salt, sig = self.fileMeta.encryptMeta(crypticle.keys[0], self.path, self.fileMod)
+        #data_key, salt, sig = self.fileMeta.encryptMeta(crypticle.keys[0], self.path, self.fileMod)
+        data_key, salt, sig = crypticle.encryptMeta(self.fileMeta, self.path, self.fileMod)
         
         # crypticle to be used for file contents
         self.crypt = getCrypticle(data_key, salt)
@@ -304,7 +305,8 @@ class EncryptedFile:
         self.setup()
 
     def setup(self):
-        data_key, salt, path, fileMod = self.fileMeta.decryptMeta(self.userCrypt.keys[0])
+        #data_key, salt, path, fileMod = self.fileMeta.decryptMeta(self.userCrypt.keys[0])
+        data_key, salt, path, fileMod = self.userCrypt.decryptMeta(self.fileMeta)
 
         self.path = path
         self.fileMod = fileMod
@@ -406,21 +408,21 @@ def test():
     crypt = getCrypticle(password, salt)
 
     
-   testFileSize = (16 * 1024 * 1024)
-   testFileContent = "Sopra la campa la capra crepa, Sotto la Panca la capra campa"
-   testFileLines = testFileSize / (len(testFileContent) + 1)
+    testFileSize = (16 * 1024 * 1024)
+    testFileContent = "Sopra la campa la capra crepa, Sotto la Panca la capra campa"
+    testFileLines = testFileSize / (len(testFileContent) + 1)
 
 
-   print "Generating a %s byte-byte long test file..." % testFileSize
-   with open(os.path.join(root_path, path_plain), "w") as f:
+    print "Generating a %s byte-byte long test file..." % testFileSize
+    with open(os.path.join(root_path, path_plain), "w") as f:
        for i in range(0,testFileLines):
            f.write(testFileContent + "\n")
 
-   call(["cp",os.path.join(root_path, path_plain), os.path.join(root_path, path_plain_check)])
+    call(["cp",os.path.join(root_path, path_plain), os.path.join(root_path, path_plain_check)])
 
-   filesize = os.path.getsize( os.path.join(root_path, path_plain_check))
+    filesize = os.path.getsize( os.path.join(root_path, path_plain_check))
 
-   start = time.time()
+    start = time.time()
 
     
     

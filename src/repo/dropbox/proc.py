@@ -144,7 +144,8 @@ class SecureBox:
 
     def decodeEntry(self, encodedPath):
         meta = self.convertPathToMeta(encodedPath.encode("utf8"))
-        data_key, salt, path, fileMod = meta.decryptMeta(self.crypt.keys[0])
+        #data_key, salt, path, fileMod = meta.decryptMeta(self.crypt.keys[0])
+        data_key, salt, path, fileMod = self.crypt.decryptMeta(meta)
 
         return path, meta
 
@@ -253,7 +254,9 @@ class SecureBox:
             if len(remoteMetas) > 0:
                 print "\nThe following files are stored remotely but not in our local index:"
                 for meta in remoteMetas:
-                    dataKey, salt, path, mod = meta.decryptMeta(self.crypt.keys[0])
+                    #dataKey, salt, path, mod = meta.decryptMeta(self.crypt.keys[0])
+                    data_key, salt, path, mod = self.crypt.decryptMeta(meta)
+
                     moddate = datetime.utcfromtimestamp(mod)
                     print "* %s - added %s UTC" % (path, moddate)
 
@@ -270,7 +273,8 @@ class SecureBox:
             for elem in rootMeta['contents']:
                 # for all the files except the index, DropBox has a hard limit to 25000 results
                 meta = self.rebuildMeta(elem['path'])
-                dataKey, salt, path, mod = meta.decryptMeta(self.crypt.keys[0])
+                #dataKey, salt, path, mod = meta.decryptMeta(self.crypt.keys[0])
+                data_key, salt, path, mod = self.crypt.decryptMeta(meta)
                 files.append(path)
 
                 moddate = datetime.utcfromtimestamp(mod)
@@ -281,7 +285,8 @@ class SecureBox:
                 if indexMeta is None: 
                     print "*** Not in local index, index might be corrupt"
                 else:
-                    indexDataKey, indexSalt, indexPath, indexMod = indexMeta.decryptMeta(self.crypt.keys[0])
+                    #indexDataKey, indexSalt, indexPath, indexMod = indexMeta.decryptMeta(self.crypt.keys[0])
+                    indexDataKey, indexSalt, indexPath, indexMod = self.crypt.decryptMeta(indexMeta)
                     if mod != indexMod:
                         print "*** Timestamp in index is different (index: %s, remote: %s)" % (str(indexMod), str(mod))
 

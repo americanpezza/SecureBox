@@ -44,7 +44,7 @@ def getCrypticle(pwd,  salt):
     
     return crypt
 
-def saveConfiguration(config, output_path,  pwd = None):
+def saveConfiguration(config, output_path,  pwd=None):
     password = pwd
     if password is None:
         password = getpass('Enter your master password: ')
@@ -56,7 +56,7 @@ def saveConfiguration(config, output_path,  pwd = None):
     with open(output_path, 'wb') as f:
         f.write(salt + encrypted)
     
-def loadConfiguration(input_path,  pwd = None):
+def loadConfiguration(input_path,  pwd=None):
     password = pwd
     if password is None:
         password = getpass('Enter your master password: ')

@@ -52,6 +52,12 @@ class Crypticle(object):
     def generate_key(self, keysize=KEY_SIZE):
         return os.urandom(keysize / 8)
 
+    def encryptMeta(self, meta, path, mod):
+        return meta.encrypt(self.keys[0], path, mod)
+
+    def decryptMeta(self, meta):
+        return meta.decrypt(self.keys[0])
+
     def getHMAC(self, data, useUserKey=True):
         key = self.keys[0]
         if not useUserKey:
