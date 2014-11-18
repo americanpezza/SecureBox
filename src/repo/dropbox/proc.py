@@ -101,28 +101,26 @@ class SecureBox:
                 if metadata is not None and metadata['is_dir']:
                     continue
 
-                #if path.upper() not in self.recentlyUpdated:
-                if True:
-                    try:
-                        decodedPath, meta = self.decodeEntry(path.upper())
-                        if metadata is None:
-                            # path has been removed
-                            removed[decodedPath] = meta
-                        else:
-                            # path has been added
-                            tree[decodedPath] = meta
+                try:
+                    decodedPath, meta = self.decodeEntry(path.upper())
+                    if metadata is None:
+                        # path has been removed
+                        removed[decodedPath] = meta
+                    else:
+                        # path has been added
+                        tree[decodedPath] = meta
 
-                    except AuthenticationException, e:
-                        if metadata is not None:
-                            print "Remote path failed authentication, ignored: %s" % path.upper()
+                except AuthenticationException, e:
+                    if metadata is not None:
+                        print "Remote path failed authentication, ignored: %s" % path.upper()
 
-                    except FileMetaException, e:
-                        if metadata is not None:
-                            print "Remote path is not a valid filemeta, ignored: %s" % path.upper()
+                except FileMetaException, e:
+                    if metadata is not None:
+                        print "Remote path is not a valid filemeta, ignored: %s" % path.upper()
 
-                    except Exception,e:
-                        print "Illegal file : %s" % path.upper()
-                        print traceback.format_exc()
+                except Exception,e:
+                    print "Illegal file : %s" % path.upper()
+                    print traceback.format_exc()
 
                 counter += 1
                 if counter % 50 == 0:
