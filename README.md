@@ -49,21 +49,26 @@ The app has been developed and tested under Mac OSX 10.9 and Linux (Ubuntu 14.04
 The help option is pretty self explanatory.
 
 ```
-$ python securebox.py -h
-usage: python securebox.py [-h]
-                     (--start | --stop | --restart | --list | --check | --rebuild | --export EXPORT | --import IMP | --configure)
+$ ./securebox -h
+usage: securebox [-h]
+                 {start,stop,list,restart,check,rebuild,configure,share} ...
+
+positional arguments:
+  {start,stop,list,restart,check,rebuild,configure,share}
+                        Commands
+    start               Start SecureBox
+    stop                Stop SecureBox
+    list                List files in SecureBox
+    restart             Restart SecureBox
+    check               Check local index with remote files
+    rebuild             Rebuild the index from the remote folder contents
+                        (DropBox API limited to 25000 files)
+    configure           Configure the application
+    share               Create a publicly available link to a file in the
+                        SecureBox
 
 optional arguments:
-  -h, --help       show this help message and exit
-  --start          Start the script
-  --stop           Stop the script
-  --restart        Restart the script
-  --list	   List files stored in the secure box. Note that this might take a long time, and doesn't accpet wildcards
-  --check	   Verifies the integrity of the local file index
-  --rebuild	   Destroys all local data (not the keys), and makes things ready to synchronize again with the remote vault. Useful in case of corruption of the local copy.
-  --export EXPORT  Export application keys
-  --import IMP     Import application keys
-  --configure      Configure the application
+  -h, --help            show this help message and exit
 ```
 
 ### Disclaimer
