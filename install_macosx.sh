@@ -23,6 +23,9 @@ sudo pip install -r requirements.txt
 mkdir ~/.securebox
 mkdir ~/SecureBox
 
+# Link inside command path
+sudo ln -s "$targetfolder/src/securebox.py" /usr/local/bin/securebox
+
 echo "Done."
 
 
