@@ -21,51 +21,62 @@ def createService(db, pidfile):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(dest='operation', help='Commands')
 
-    action = parser.add_mutually_exclusive_group(required=True)
-    action.add_argument('--start', help='Start the script',
-                        action='store_true')
+    # Start
+    start_parser = subparsers.add_parser('start', help="Start SecureBox")
 
-    action.add_argument('--stop', help='Stop the script',
-                        action='store_true')
+    # Stop
+    stop_parser = subparsers.add_parser('stop', help="Stop SecureBox")
 
-    action.add_argument('--restart', help='Restart the script',
-                        action='store_true')
+    # List
+    list_parser = subparsers.add_parser('list', help="List files in SecureBox")
 
-    action.add_argument('--list', help='List files in SecureBox',
-                        action='store_true')
+    # Restart
+    restart_parser = subparsers.add_parser('restart', help="Restart SecureBox")
 
-    action.add_argument('--check', help='Check local index with remote files',
-                        action='store_true')
+    # Check
+    check_parser = subparsers.add_parser('check', help="Check local index with remote files")
 
-    action.add_argument('--rebuild', help='Rebuild the index from the remote folder contents (DropBox API limited to 25000 files)',
-                        action='store_true')
+    # Rebuild
+    rebuild_parser = subparsers.add_parser('rebuild', help="Rebuild the index from the remote folder contents (DropBox API limited to 25000 files)")
 
-    action.add_argument('--export', help='Export application keys',
-                        dest='export')
+    # Configure
+    configure_parser = subparsers.add_parser('configure', help="Configure the application")
 
-    action.add_argument('--import', help='Import application keys',
-                        dest='imp')
+    # Share a link to a file
+    share_parser = subparsers.add_parser('share', help="Create a publicly available link to a file in the SecureBox")
+    share_parser.add_argument('path', action='store', help="The file path to create a link to")
 
-    action.add_argument('--configure', help='Configure the application',
-                        action='store_true')
+
+    #action.add_argument('--export', help='Export application keys',
+    #                    dest='export')
+
+    #action.add_argument('--import', help='Import application keys',
+    #                    dest='imp')
+
     args = parser.parse_args()
+    operation = args.operation
 
-    if args.export is not None:
+    if operation == "share":
+        db = SecureBox()
+        db.share(args.path)
+
+    elif operation == "export":
         configure.export_configuration(args.export)
 
-    elif args.imp is not None:
+    elif operation == "import":
         configure.import_configuration(args.imp)
 
-    elif args.list:
+    elif operation == "list":
         db = SecureBox()
         db.list()
 
-    elif args.check:
+    elif operation == "check":
         db = SecureBox()
         db.check()
 
-    elif args.rebuild:
+    elif operation == "rebuild":
         choice = "n"
         if os.path.exists(CONFIG_DB):
             while 1:
@@ -78,7 +89,7 @@ if __name__ == '__main__':
             db = SecureBox()
             db.rebuild()
 
-    elif args.configure:
+    elif operation == "configure":
         if not os.path.exists(APP_PATH):
             os.makedirs(APP_PATH)
 
@@ -94,18 +105,18 @@ if __name__ == '__main__':
         if choice == 'Y':
             configure.new_configuration()
 
-    else:
+    elif operation == "start":
         db = SecureBox()
+        daemon = createService(db, PIDFILE)
+        daemon.start()
 
-        if args.start:
-            daemon = createService(db, PIDFILE)
-            daemon.start()
+    elif operation == "stop":
+        db = SecureBox()
+        daemon = createService(db, PIDFILE)
+        daemon.stop()
 
-        elif args.stop:
-            daemon = createService(db, PIDFILE)
-            daemon.stop()
-
-        elif args.restart:
-            daemon = createService(db, PIDFILE)
-            daemon.restart()
+    elif operation == "restart":
+        db = SecureBox()
+        daemon = createService(db, PIDFILE)
+        daemon.restart()
         

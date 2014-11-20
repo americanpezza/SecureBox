@@ -1,4 +1,4 @@
-import os, sys, traceback, time, shutil, re
+import os, sys, traceback, time, shutil, re, base64
 from datetime import datetime
 import dropbox
 from crypto.base import loadConfiguration
@@ -272,29 +272,36 @@ class SecureBox:
 
             for elem in rootMeta['contents']:
                 # for all the files except the index, DropBox has a hard limit to 25000 results
-                meta = self.rebuildMeta(elem['path'])
-                #dataKey, salt, path, mod = meta.decryptMeta(self.crypt.keys[0])
-                data_key, salt, path, mod = self.crypt.decryptMeta(meta)
-                files.append(path)
-
-                moddate = datetime.utcfromtimestamp(mod)
-                print "* %s - added %s UTC" % (path, moddate)
-                    
-                indexMeta = self.localIndex.getFileMeta(path)
-
-                if indexMeta is None: 
-                    print "*** Not in local index, index might be corrupt"
-                else:
-                    #indexDataKey, indexSalt, indexPath, indexMod = indexMeta.decryptMeta(self.crypt.keys[0])
-                    indexDataKey, indexSalt, indexPath, indexMod = self.crypt.decryptMeta(indexMeta)
-                    if mod != indexMod:
-                        print "*** Timestamp in index is different (index: %s, remote: %s)" % (str(indexMod), str(mod))
+                if elem['is_dir']:
+                    try:
+                        path = self.processPath(elem['path'])
+                        files.append(path)
+                    except Exception, e:
+                        print "Remote path %s failed decryption, ignored" % str(elem['path'])
 
             if len(self.localIndex.getFiles()) != len(files):
                 print "\n*** Remote index size (%d) != actual remote files (%d)" % (len(self.localIndex.getFiles()), len(files))
 
         except Exception, e:
             print traceback.format_exc() 
+
+    def processPath(self, remote_path):
+        meta = self.rebuildMeta(remote_path)
+        data_key, salt, path, mod = self.crypt.decryptMeta(meta)
+
+        moddate = datetime.utcfromtimestamp(mod)
+        print "* %s - added %s UTC" % (path, moddate)
+                    
+        indexMeta = self.localIndex.getFileMeta(path)
+
+        if indexMeta is None: 
+            print "*** Not in local index, index might be corrupt"
+        else:
+            indexDataKey, indexSalt, indexPath, indexMod = self.crypt.decryptMeta(indexMeta)
+            if mod != indexMod:
+                print "*** Timestamp in index is different (index: %s, remote: %s)" % (str(indexMod), str(mod))
+
+        return path
 
     def convertPathToMeta(self, encodedPath):
         stringMeta = ''.join( encodedPath.encode("utf8").split('/'))
@@ -307,4 +314,39 @@ class SecureBox:
             return self.rebuildMeta(folder)
         else:
             return self.convertPathToMeta(folder)
+
+    def retrieve(self, url):
+        pass
+
+    def share(self, path):
+        meta = self.localIndex.getFileMeta(path)
+        if meta is None:
+            print "File %s is not in SecureBox." % path
+        else:
+            try:
+                remote_path = meta.asUrl()
+                print "Url is %s" % remote_path
+                response = self.client.media(remote_path)
+                 
+                result = {}
+                result['meta'] = meta
+                result['url'] = response['url']
+                result['validity'] = response['expires']
+
+                encrypted = self.crypt.dumps(result)
+                print "\nURL: %s" % response['url']
+                print "\nYou can share %s using the URL: %s\nThe URL will be valid until %s\n" % (path, base64.b32encode(encrypted), response['expires'])
+            except ErrorResponse, er:
+                status = er.status
+
+                # generic error
+                if status == 400 or status == 406:
+                    print "Generic Dropbox error"
+                    print traceback.format_exc()
+                # not found
+                elif status == 404:
+                    print "File %s is in local index but not on remote dropbox. Possible bug?" % path
+                else:
+                    print traceback.format_exc()
+
 
